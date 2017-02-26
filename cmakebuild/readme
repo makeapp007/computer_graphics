@@ -1,0 +1,8 @@
+cd build
+cmake ..
+make
+
+Or
+g++ 1.cpp  -lglfw3 -lGL -lm -ldl -lXinerama -lXrandr -lXi -lXcursor -lX11 -lXxf86vm -lpthread -lGLEW -lGLU
+
+
