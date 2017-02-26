@@ -1,0 +1,7 @@
+project(hello_world)
+cmake_minimum_required(VERSION 2.8)
+set(CMAKE_C_FLAGS "-frounding-math")
+set(CMAKE_CXX_FLAGS "-frounding-math")
+aux_source_directory(. SRCS)
+add_executable(hello_world ${SRCS})
+target_link_libraries(hello_world  glfw3 X11 Xrandr Xi Xinerama Xxf86vm Xcursor GL GLEW pthread dl)
