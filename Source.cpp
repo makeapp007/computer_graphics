@@ -13,15 +13,6 @@
 #include <fstream>
 
 
-
-
-// #include <opencv2/core/core.hpp>
-// #include <opencv2/highgui/highgui.hpp>
-
-
-// Other includes
-// #include "opencv2/opencv.hpp"
-
 #include "Shader.h"
 using namespace std;
 // using namespace cv;
@@ -58,36 +49,18 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 }
 
 
-double time =0; //time to switch image
-
-// float saberCoor[8]; //2 for one point,(x,y)
-
+double timeToswitch =0; //time to switch image
 int saberindex=0;  //current picture's point's index
 int saberindex_flag=0;
 int currentObject=0;   
-	int imageNum=87;	//total number of image
-	int imageNumindex=1;  //which image to display
-	int step=5;  //calibrate every 5 pictures
-	int changePicture= 0;
-	int pointNum=0;  //if equals 4, then paint picture and change picture.
+int imageNum=87;	//total number of image
+int imageNumindex=1;  //which image to display
+int step=5;  //calibrate every 5 pictures
+int changePicture= 0;
+int pointNum=0;  //if equals 4, then paint picture and change picture.
 int paintPicture=0;
-// static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos){
-// 	// int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
-// 	// if (state == GLFW_PRESS){
-// 	// 	cout<<"i am in cursor callback function  "<<"x is "<<xpos<<" y is  "<< ypos	<<"   " <<times<<endl;
-// 	// 	times++;
-// 	// 	float NDCx=(xpos-400)/400;
-// 	// 	float NDCy=(ypos-300)/300;
-// 	// 	saberCoor[saberindex]=NDCx;
-// 	// 	saberindex++;
-// 	// 	saberCoor[saberindex]=NDCy;
-// 	// 	saberindex++;
-// 	// 	cout<<"currently "<<"x is "<<NDCx<<" y is  "<< NDCy	<<"   " <<times<<endl;
 
 
-// 	// }
-
-// }
 
 GLuint VBO1, VAO1, EBO1;
 GLfloat vertices1[3*4];
@@ -182,19 +155,6 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 			changePicture=1;
 			// cout<<"changePicture=1; "<<saberindex_flag<<endl;
 		}
-		// else if(saberindex==imageNumindex*12 && changePicture==FALSE){
-		// 	changePicture=TRUE;
-
-		// 	cout<<"*****dangerous, this array only allows to store four points*****"<<endl;
-		// 	cout<<"if you click again, it will draw a rectangle"<<endl;
-		// 	saberindex++;
-
-		// }
-		// else if(saberindex==3*4+1){
-		// 	saberindex_flag=1;
-		// 	saberindex++;
-
-		// }
 
 
     }
@@ -223,7 +183,7 @@ int main()
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
 	// Create a GLFWwindow object that we can use for GLFW's functions
-	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "HW1", nullptr, nullptr);
+	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Computer Graphics HW1", nullptr, nullptr);
 	glfwMakeContextCurrent(window);
 
 	// Set the required callback functions
@@ -517,8 +477,6 @@ int main()
 		}
 	}	
 
-
-
 	ofstream outfile2;
 	outfile2.open("data_after.txt");
 	// write im to file, print every 12 value
@@ -530,18 +488,28 @@ int main()
 	}
 
 
+
 	// start streaming like a video
 	imageNumindex=1;
-	saberindex=0;
+	// saberindex=0;
 	// Game loop
 	while (!glfwWindowShouldClose(window))
 	{
 		// Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions
 		glfwPollEvents();
+		
 
-		time = glfwGetTime();
+		// replay again
+		if(imageNumindex>imageNum){
+			imageNumindex=1;
+		}
+
+
+		timeToswitch = glfwGetTime();
 		while(1){
-			if(glfwGetTime()-time >0.03){
+			// 1/30=0.03	
+			if(glfwGetTime()-timeToswitch >0.03){
+				cout<<"switching image"<<endl;
 				break;
 			}
 		}
@@ -577,7 +545,7 @@ int main()
 
 		// draw texture
 		string imagepath="image-"+to_string(imageNumindex)+".jpeg";
-		cout<<"------imagepath is "<<imagepath<<endl;
+		// cout<<"------imagepath is "<<imagepath<<endl;
 		image = SOIL_load_image(imagepath.c_str(), &width, &height, 0, SOIL_LOAD_RGB);		
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
 		glGenerateMipmap(GL_TEXTURE_2D);
@@ -611,6 +579,9 @@ int main()
 
 
 
+	// ********
+	// end of code
+	// ********
 
 
 
