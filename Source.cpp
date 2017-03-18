@@ -200,49 +200,10 @@ int main()
 
 
 
-    // Build and compile our shader program
-    // Vertex shader
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-    // Check for compile time errors
-    GLint success;
-    GLchar infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-    // Fragment shader
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-    // Check for compile time errors
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-    // Link shaders
-    GLuint shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-    // Check for linking errors
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-    }
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
-
-
-
 	// Build and compile our shader program
+	// this is for the color block
+	Shader colorShader("shader.vs", "shader.frag");
+	// this is for the video clip
 	Shader ourShader("texture.vs", "texture.frag");
 
 
@@ -347,17 +308,7 @@ int main()
 			glUniform1i(glGetUniformLocation(ourShader.Program, "ourTexture1"), 0);
 
 		}
-			// cout<<"currentObject is "<<currentObject<<endl;
-			// //bindTexture2
-			// glActiveTexture(GL_TEXTURE1);
-			// glBindTexture(GL_TEXTURE_2D, texture2);
-			// glUniform1i(glGetUniformLocation(ourShader.Program, "ourTexture2"), 1);
 
-
-		// }
-		// if(saberindex==9 && saberindex_flag==1){
-
-			    // Draw our first triangle
 
 
 		// repaint the picture
@@ -392,7 +343,8 @@ int main()
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 			glBindVertexArray(0);
 
-	        glUseProgram(shaderProgram);
+			colorShader.Use();
+	        // glUseProgram(shaderProgram);
 	        glBindVertexArray(VAO1);
 	        //glDrawArrays(GL_TRIANGLES, 0, 6);
 	        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
