@@ -88,7 +88,7 @@ GLfloat vertices1[] = {
 
 GLuint indices1[] = {  // Note that we start from 0!
 	0, 1, 2, // First Triangle
-	// 1, 2, 3  // Second Triangle
+	0, 2, 3  // Second Triangle
 };
 
 
@@ -106,7 +106,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		// cout<<"i am in cursor callback function  "<<"x is "<<xpos<<" y is  "<< ypos	<<"   "<<endl;
 
 		// store four points's coordinate
-		if(saberindex<9){
+		if(saberindex<3*4){
 
 			// saberCoor[saberindex]=NDCx;
 			// saberindex++;
@@ -121,13 +121,13 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 			// cout<<(GLfloat)NDCx<<" (GLfloat)NDCx"<<endl;
 			cout<<"currently "<<"x is "<<NDCx<<" y is  "<< NDCy	<<"  current saberindex is  "<<saberindex <<endl;
 		}
-		else if(saberindex==9){
+		else if(saberindex==3*4){
 			cout<<"*****dangerous, this array only allows to store four points*****"<<endl;
 			cout<<"if you click again, it will draw a rectangle"<<endl;
 			saberindex++;
 
 		}
-		else if(saberindex==10){
+		else if(saberindex==3*4+1){
 			saberindex_flag=1;
 			saberindex++;
 
@@ -395,7 +395,7 @@ int main()
 	        glUseProgram(shaderProgram);
 	        glBindVertexArray(VAO1);
 	        //glDrawArrays(GL_TRIANGLES, 0, 6);
-	        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+	        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 	        glBindVertexArray(0);
 
 
