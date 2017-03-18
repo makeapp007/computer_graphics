@@ -10,6 +10,9 @@
 #include <string>
 
 #include "SOIL/src/SOIL.h"
+#include <fstream>
+
+
 
 
 // #include <opencv2/core/core.hpp>
@@ -55,9 +58,11 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 }
 
 
-int times=0;
-float saberCoor[8]; //2 for one point,(x,y)
-int saberindex=0;  //which saber
+double time =0; //time to switch image
+
+// float saberCoor[8]; //2 for one point,(x,y)
+
+int saberindex=0;  //current picture's point's index
 int saberindex_flag=0;
 int currentObject=0;   
 	int imageNum=87;	//total number of image
@@ -85,7 +90,14 @@ int paintPicture=0;
 // }
 
 GLuint VBO1, VAO1, EBO1;
- GLfloat vertices1[87*3*4];
+GLfloat vertices1[3*4];
+// GLfloat verticesall[87*3*4];
+// int* p1 = (int*)std::malloc(4*sizeof(int));  // allocates enough for an array of 4 int
+//     int* p2 = (int*)std::malloc(sizeof(int[4])); // same, naming the type directly
+//     int* p3 = (int*)std::malloc(4*sizeof *p3);   // same, without repeating the type name
+ 
+GLfloat* verticesall= (GLfloat*)malloc(sizeof(GLfloat[87*3*4]));
+//  if not use malloc, encounter memory problem(like bus error)
 
 // vertices1[] = {
 // 	// Positions          // Colors           // Texture Coords
@@ -95,6 +107,27 @@ GLuint VBO1, VAO1, EBO1;
 // 	-0.5f, 0.5f, 0.0f,
 // };
 
+void copySaberindex(){
+	// cout<<"error occurs hereaaa "<<imageNumindex<<"  "<<(imageNumindex-1)*60<<endl;
+	for(int i=0;i<12;i++){
+		verticesall[i+(imageNumindex-1)/5*60]=vertices1[i];
+	}
+	// cout<<"error occurs here"<<endl;
+}
+void restoreVertex(){
+	for(int i=0;i<12;i++){
+		vertices1[i]=verticesall[i+(imageNumindex-1)/5*60];
+	}
+}
+
+
+void initialSaberVertex(){
+	for(int i=0;i<12;i++){
+		vertices1[i]=(GLfloat)0.0f;
+	}
+	// cout<<"error occurs herein he "<<endl;
+
+}
 
 
 GLuint indices1[] = {  // Note that we start from 0!
@@ -103,6 +136,8 @@ GLuint indices1[] = {  // Note that we start from 0!
 };
 
 
+
+// point 4 times to record four points, fifth time to paint rectangle, sixth time to change picture and erase rectangle
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods){
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS){
         cout<<"mouse  button is "<<button<<" action is "<<action<<" mods is "<<mods<<endl;
@@ -121,7 +156,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		// pointing how many times 
 		pointNum++;
 		// store four points's coordinate
-		if(saberindex<imageNumindex*12){
+		if(saberindex<12){
 
 			// saberCoor[saberindex]=NDCx;
 			// saberindex++;
@@ -164,7 +199,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 
     }
     else if(button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS){
-    	cout<<"mouse  button is "<<button<<" action is "<<action<<" mods is "<<mods<<endl;
+    	cout<<"in GLFW_MOUSE_BUTTON_RIGHT";
 		cout<<"finish drawing"<<endl;
     }
 }
@@ -188,7 +223,7 @@ int main()
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
 	// Create a GLFWwindow object that we can use for GLFW's functions
-	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Texture", nullptr, nullptr);
+	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "HW1", nullptr, nullptr);
 	glfwMakeContextCurrent(window);
 
 	// Set the required callback functions
@@ -321,6 +356,8 @@ int main()
 	// glBindTexture(GL_TEXTURE_2D, 0);
 
 
+
+
 	// Game loop
 	while (!glfwWindowShouldClose(window))
 	{
@@ -340,12 +377,20 @@ int main()
 		// unsigned char* image = SOIL_load_image("container.jpg", &width, &height, 0, SOIL_LOAD_RGB);
 
 		if(changePicture==1){
+
+			copySaberindex();
+			initialSaberVertex();
 			imageNumindex+=step;
-			saberindex=imageNumindex*12;
+			if(imageNumindex>imageNum){
+				break;
+				// start to interpolate
+
+			}
+			saberindex=0;
 			changePicture=0;
-			// saberindex_flag=0;
+
+			// change picture, this picture is used in texture
 			string imagepath="image-"+to_string(imageNumindex)+".jpeg";
-			
 			cout<<"------imagepath is "<<imagepath<<endl;
 			image = SOIL_load_image(imagepath.c_str(), &width, &height, 0, SOIL_LOAD_RGB);		
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
@@ -354,6 +399,24 @@ int main()
 			glBindTexture(GL_TEXTURE_2D, 0);
 
 
+			// notify to erase shader
+			glGenVertexArrays(1, &VAO1);
+			glGenBuffers(1, &VBO1);
+			glGenBuffers(1, &EBO1);
+
+			glBindVertexArray(VAO1);
+
+			glBindBuffer(GL_ARRAY_BUFFER, VBO1);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(vertices1), vertices1, GL_DYNAMIC_DRAW);
+
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO1);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices1), indices1, GL_DYNAMIC_DRAW);
+			// Position attribute
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+			glEnableVertexAttribArray(0);
+
+			glBindVertexArray(0); // Unbind VAO1			
+
 		}
 		// cout<<"   "<<imagesequence<< "width is "<<width <<endl;
 
@@ -361,15 +424,6 @@ int main()
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture1);
 		glUniform1i(glGetUniformLocation(ourShader.Program, "ourTexture1"), 0);
-
-		// glGenTextures(1, &texture1);
-		// glBindTexture(GL_TEXTURE_2D, texture1);
-		// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-
 
 
 		// repaint the picture and display the effect
@@ -387,7 +441,7 @@ int main()
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices1), indices1, GL_DYNAMIC_DRAW);
 
 			// Position attribute
-			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)((imageNumindex-1)*60));
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
 			glEnableVertexAttribArray(0);
 
 			glBindVertexArray(0); // Unbind VAO1
@@ -395,8 +449,7 @@ int main()
 
 		}
 
-		// }
-			// // Draw the triangle
+
 
 			// first texture, then shader. otherwise, not work
 			ourShader.Use();
@@ -416,6 +469,151 @@ int main()
 		// Swap the screen buffers
 		glfwSwapBuffers(window);
 	}
+	
+
+
+
+	ofstream outfile;
+	outfile.open("data_ori.txt");
+	// write im to file
+	for(int i=0;i<imageNum*12;i++){
+		outfile << verticesall[i]<< " ";
+		if(i>0 && i%12==0){
+			outfile<<endl;
+		}
+	}
+	cout<<"finish writing vertice origin to local storage"<<endl;
+
+
+
+	// **************
+	// start to interpolate
+	// **************
+	imageNumindex=1;
+	float dis=0;
+	for(;imageNumindex<imageNum-step;imageNumindex+=step){
+
+		// each 12 values
+		// i=0,3,6,9
+		for(int i=0;i<12;i=i+3){
+			// 0.x
+			dis=verticesall[60*(imageNumindex+4)/5+i]-verticesall[60*(imageNumindex-1)/5+i];
+			dis=dis/5;
+			// j is 1,2,3,4
+			for(int j=1;j<5;j++){
+				verticesall[60*(imageNumindex+4)/5+i+j*12]=verticesall[60*(imageNumindex-1)/5+i]+dis*j;
+			}
+			// 0.y
+			dis=verticesall[60*(imageNumindex+4)/5+i+1]-verticesall[60*(imageNumindex-1)/5+i+1];
+			dis=dis/5;
+			for(int j=1;j<5;j++){
+				verticesall[60*(imageNumindex+4)/5+i+1+j*12]=verticesall[60*(imageNumindex-1)/5+i+1]+dis*j;
+			}
+			// 0.z
+			for(int j=1;j<5;j++){
+				verticesall[60*(imageNumindex+4)/5+i+2+j*12]=0;
+			}
+
+		}
+	}	
+
+
+
+	ofstream outfile2;
+	outfile2.open("data_after.txt");
+	// write im to file, print every 12 value
+	for(int i=0;i<imageNum*12;i++){
+		outfile2 << verticesall[i]<< " ";
+		if(i>0 && i%12==0){
+			outfile2<<endl;
+		}
+	}
+
+
+	// start streaming like a video
+	imageNumindex=1;
+	saberindex=0;
+	// Game loop
+	while (!glfwWindowShouldClose(window))
+	{
+		// Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions
+		glfwPollEvents();
+
+		time = glfwGetTime();
+		while(1){
+			if(glfwGetTime()-time >0.03){
+				break;
+			}
+		}
+
+		// Render
+		// Clear the colorbuffer
+		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+
+		// restore vertice1
+		restoreVertex();
+		// paint the rectangle
+		glGenVertexArrays(1, &VAO1);
+		glGenBuffers(1, &VBO1);
+		glGenBuffers(1, &EBO1);
+
+		glBindVertexArray(VAO1);
+
+		glBindBuffer(GL_ARRAY_BUFFER, VBO1);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices1), vertices1, GL_DYNAMIC_DRAW);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO1);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices1), indices1, GL_DYNAMIC_DRAW);
+
+		// Position attribute
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+		glEnableVertexAttribArray(0);
+
+		glBindVertexArray(0); // Unbind VAO1
+
+
+
+		// draw texture
+		string imagepath="image-"+to_string(imageNumindex)+".jpeg";
+		cout<<"------imagepath is "<<imagepath<<endl;
+		image = SOIL_load_image(imagepath.c_str(), &width, &height, 0, SOIL_LOAD_RGB);		
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+		glGenerateMipmap(GL_TEXTURE_2D);
+		SOIL_free_image_data(image);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+
+		// active texture
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture1);
+		glUniform1i(glGetUniformLocation(ourShader.Program, "ourTexture1"), 0);
+
+		// paint shader
+			// first texture, then shader. otherwise, not work
+			ourShader.Use();
+			glBindVertexArray(VAO);
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+			glBindVertexArray(0);
+
+			colorShader.Use();
+	        glBindVertexArray(VAO1);
+	        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+	        glBindVertexArray(0);
+
+	    imageNumindex++;
+		// Swap the screen buffers
+		glfwSwapBuffers(window);
+	}
+	
+
+
+
+
+
+
+
 	// Properly de-allocate all resources once they've outlived their purpose
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
