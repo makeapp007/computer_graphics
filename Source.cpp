@@ -7,7 +7,7 @@
 #include <OpenGL/glu.h>
 // GLFW
 #include <GLFW/glfw3.h>
-
+#include <string>
 
 #include "SOIL/src/SOIL.h"
 
@@ -17,8 +17,11 @@
 
 
 // Other includes
+// #include "opencv2/opencv.hpp"
+
 #include "Shader.h"
 using namespace std;
+// using namespace cv;
 
 
 
@@ -54,11 +57,15 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 int times=0;
 float saberCoor[8]; //2 for one point,(x,y)
-int saberindex=0;
+int saberindex=0;  //which saber
 int saberindex_flag=0;
-int currentObject=0;
-
-
+int currentObject=0;   
+	int imageNum=87;	//total number of image
+	int imageNumindex=1;  //which image to display
+	int step=5;  //calibrate every 5 pictures
+	int changePicture= 0;
+	int pointNum=0;  //if equals 4, then paint picture and change picture.
+int paintPicture=0;
 // static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos){
 // 	// int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
 // 	// if (state == GLFW_PRESS){
@@ -78,13 +85,17 @@ int currentObject=0;
 // }
 
 GLuint VBO1, VAO1, EBO1;
-GLfloat vertices1[] = {
-	// Positions          // Colors           // Texture Coords
-	0.5f, 0.5f, 0.0f,
-	0.5f, -0.5f, 0.0f,
-	-0.5f, -0.5f, 0.0f,
-	-0.5f, 0.5f, 0.0f,
-};
+ GLfloat vertices1[87*3*4];
+
+// vertices1[] = {
+// 	// Positions          // Colors           // Texture Coords
+// 	0.5f, 0.5f, 0.0f,
+// 	0.5f, -0.5f, 0.0f,
+// 	-0.5f, -0.5f, 0.0f,
+// 	-0.5f, 0.5f, 0.0f,
+// };
+
+
 
 GLuint indices1[] = {  // Note that we start from 0!
 	0, 1, 2, // First Triangle
@@ -103,10 +114,14 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 			NDCx=(xpos-400)/400;
 			NDCy=-(ypos-300)/300;
 		}
-		// cout<<"i am in cursor callback function  "<<"x is "<<xpos<<" y is  "<< ypos	<<"   "<<endl;
+		else{
+			return ;
+		}
 
+		// pointing how many times 
+		pointNum++;
 		// store four points's coordinate
-		if(saberindex<3*4){
+		if(saberindex<imageNumindex*12){
 
 			// saberCoor[saberindex]=NDCx;
 			// saberindex++;
@@ -120,18 +135,31 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 			saberindex++;
 			// cout<<(GLfloat)NDCx<<" (GLfloat)NDCx"<<endl;
 			cout<<"currently "<<"x is "<<NDCx<<" y is  "<< NDCy	<<"  current saberindex is  "<<saberindex <<endl;
+			
 		}
-		else if(saberindex==3*4){
-			cout<<"*****dangerous, this array only allows to store four points*****"<<endl;
-			cout<<"if you click again, it will draw a rectangle"<<endl;
-			saberindex++;
+		else if(pointNum==5 && changePicture==0 ){
+			paintPicture=1;
+			// saberindex_flag=1;
+			// cout<<"changePicture=0;  "<<saberindex_flag<<endl;
+		}
+		else if(pointNum==6 && changePicture==0 ) {
+			pointNum=0;
+			changePicture=1;
+			// cout<<"changePicture=1; "<<saberindex_flag<<endl;
+		}
+		// else if(saberindex==imageNumindex*12 && changePicture==FALSE){
+		// 	changePicture=TRUE;
 
-		}
-		else if(saberindex==3*4+1){
-			saberindex_flag=1;
-			saberindex++;
+		// 	cout<<"*****dangerous, this array only allows to store four points*****"<<endl;
+		// 	cout<<"if you click again, it will draw a rectangle"<<endl;
+		// 	saberindex++;
 
-		}
+		// }
+		// else if(saberindex==3*4+1){
+		// 	saberindex_flag=1;
+		// 	saberindex++;
+
+		// }
 
 
     }
@@ -176,6 +204,7 @@ int main()
 
 	// Define the viewport dimensions
 	glViewport(0, 0, WIDTH, HEIGHT);
+
 
 
 
@@ -261,32 +290,35 @@ int main()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	int width, height;
-	//if u use openCV:
-	/*cv::Mat myMat = cv::imread("container.jpg");
-	height = myMat.rows;
-	width = myMat.cols;
-	cv::Mat image;
-	cv::flip(myMat, image, 0);*/
-	unsigned char* image = SOIL_load_image("container.jpg", &width, &height, 0, SOIL_LOAD_RGB);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	SOIL_free_image_data(image);
-	glBindTexture(GL_TEXTURE_2D, 0);
+	// int width, height;
+	// unsigned char* image = SOIL_load_image("container.jpg", &width, &height, 0, SOIL_LOAD_RGB);
+	// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+	// glGenerateMipmap(GL_TEXTURE_2D);
+	// SOIL_free_image_data(image);
+	// glBindTexture(GL_TEXTURE_2D, 0);
+
+		string imagepath="image-"+to_string(imageNumindex)+".jpeg";
+		// cout<<"imagepath is "<<imagepath<<endl;
+				int width, height;	
+		unsigned char* image = SOIL_load_image(imagepath.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+		glGenerateMipmap(GL_TEXTURE_2D);
+		SOIL_free_image_data(image);
+		glBindTexture(GL_TEXTURE_2D, 0);
 
 
 	//texture2
-	glGenTextures(1, &texture2);
-	glBindTexture(GL_TEXTURE_2D, texture2);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	image = SOIL_load_image("flag.png", &width, &height, 0, SOIL_LOAD_RGB);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	SOIL_free_image_data(image);
-	glBindTexture(GL_TEXTURE_2D, 0);
+	// glGenTextures(1, &texture2);
+	// glBindTexture(GL_TEXTURE_2D, texture2);
+	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// image = SOIL_load_image("flag.png", &width, &height, 0, SOIL_LOAD_RGB);
+	// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+	// glGenerateMipmap(GL_TEXTURE_2D);
+	// SOIL_free_image_data(image);
+	// glBindTexture(GL_TEXTURE_2D, 0);
 
 
 	// Game loop
@@ -300,19 +332,48 @@ int main()
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		if(currentObject==0){
+
+		// change texture every second
+		// if(currentObject==0){
 			// cout<<"currentObject is "<<currentObject<<endl;
 			// bindTexture1
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, texture1);
-			glUniform1i(glGetUniformLocation(ourShader.Program, "ourTexture1"), 0);
+		// unsigned char* image = SOIL_load_image("container.jpg", &width, &height, 0, SOIL_LOAD_RGB);
+
+		if(changePicture==1){
+			imageNumindex+=step;
+			saberindex=imageNumindex*12;
+			changePicture=0;
+			// saberindex_flag=0;
+			string imagepath="image-"+to_string(imageNumindex)+".jpeg";
+			
+			cout<<"------imagepath is "<<imagepath<<endl;
+			image = SOIL_load_image(imagepath.c_str(), &width, &height, 0, SOIL_LOAD_RGB);		
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+			glGenerateMipmap(GL_TEXTURE_2D);
+			SOIL_free_image_data(image);
+			glBindTexture(GL_TEXTURE_2D, 0);
+
 
 		}
+		// cout<<"   "<<imagesequence<< "width is "<<width <<endl;
+
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture1);
+		glUniform1i(glGetUniformLocation(ourShader.Program, "ourTexture1"), 0);
+
+		// glGenTextures(1, &texture1);
+		// glBindTexture(GL_TEXTURE_2D, texture1);
+		// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 
 
-		// repaint the picture
-		if(saberindex_flag==1){	
+
+		// repaint the picture and display the effect
+		if(paintPicture==1){	
 			glGenVertexArrays(1, &VAO1);
 			glGenBuffers(1, &VBO1);
 			glGenBuffers(1, &EBO1);
@@ -326,11 +387,11 @@ int main()
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices1), indices1, GL_DYNAMIC_DRAW);
 
 			// Position attribute
-			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)((imageNumindex-1)*60));
 			glEnableVertexAttribArray(0);
 
 			glBindVertexArray(0); // Unbind VAO1
-			saberindex_flag=0;
+			paintPicture=0;
 
 		}
 
