@@ -53,12 +53,15 @@ double timeToswitch =0; //time to switch image
 int saberindex=0;  //current picture's point's index
 int saberindex_flag=0;
 int currentObject=0;   
-int imageNum=87;	//total number of image
+int imageNum=98;	//total number of image
 int imageNumindex=1;  //which image to display
 int step=5;  //calibrate every 5 pictures
 int changePicture= 0;
 int pointNum=0;  //if equals 4, then paint picture and change picture.
 int paintPicture=0;
+// Window dimensions
+const GLuint WIDTH = 540, HEIGHT = 960;
+
 
 
 
@@ -69,7 +72,7 @@ GLfloat vertices1[3*4];
 //     int* p2 = (int*)std::malloc(sizeof(int[4])); // same, naming the type directly
 //     int* p3 = (int*)std::malloc(4*sizeof *p3);   // same, without repeating the type name
  
-GLfloat* verticesall= (GLfloat*)malloc(sizeof(GLfloat[87*3*4]));
+GLfloat* verticesall= (GLfloat*)malloc(sizeof(GLfloat [112*3*4]));
 //  if not use malloc, encounter memory problem(like bus error)
 
 // vertices1[] = {
@@ -118,9 +121,9 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		glfwGetCursorPos(window, &xpos, &ypos);
 		float NDCx=0;
 		float NDCy=0;
-		if(xpos<=800 && xpos>=0 && ypos<=600 && ypos>=0){
-			NDCx=(xpos-400)/400;
-			NDCy=-(ypos-300)/300;
+		if(xpos<=WIDTH && xpos>=0 && ypos<=HEIGHT && ypos>=0){
+			NDCx=(xpos-WIDTH/2)/(WIDTH/2);
+			NDCy=-(ypos-HEIGHT/2)/(HEIGHT/2);
 		}
 		else{
 			return ;
@@ -166,9 +169,6 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 
 
 
-
-// Window dimensions
-const GLuint WIDTH = 800, HEIGHT = 600;
 
 // The MAIN function, from here we start the application and run the game loop
 int main()
@@ -302,13 +302,14 @@ int main()
 		glBindTexture(GL_TEXTURE_2D, 0);
 
 
-	//texture2
-	// glGenTextures(1, &texture2);
-	// glBindTexture(GL_TEXTURE_2D, texture2);
-	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// texture2
+	glGenTextures(1, &texture2);
+	glBindTexture(GL_TEXTURE_2D, texture2);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	
 	// image = SOIL_load_image("flag.png", &width, &height, 0, SOIL_LOAD_RGB);
 	// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
 	// glGenerateMipmap(GL_TEXTURE_2D);
@@ -388,6 +389,8 @@ int main()
 
 		// repaint the picture and display the effect
 		if(paintPicture==1){	
+
+
 			glGenVertexArrays(1, &VAO1);
 			glGenBuffers(1, &VBO1);
 			glGenBuffers(1, &EBO1);
@@ -405,6 +408,8 @@ int main()
 			glEnableVertexAttribArray(0);
 
 			glBindVertexArray(0); // Unbind VAO1
+
+
 			paintPicture=0;
 
 		}
@@ -508,8 +513,8 @@ int main()
 		timeToswitch = glfwGetTime();
 		while(1){
 			// 1/30=0.03	
-			if(glfwGetTime()-timeToswitch >0.03){
-				cout<<"switching image"<<endl;
+			if(glfwGetTime()-timeToswitch >0.04){
+				// cout<<"switching image"<<endl;
 				break;
 			}
 		}
