@@ -7,6 +7,8 @@ using namespace std;
 
 #include <stdlib.h>
 #include <math.h>
+#include <vector>
+#include <algorithm>
 
 #include <sys/types.h>
 #include "glut.h"
@@ -22,12 +24,25 @@ int y_offset=0;
 int oldx=0,oldy=0;
 int windx=1024;
 int windy=1024;
+GLenum renderMode = GL_RENDER;
+int isPicking=0; //0 means not picking, 1 means picking
+int minFaceName=-1; //record the minFaceId, if modify, it must be bigger than 0
+vector<int> minFaceNameAll;
+GLfloat operationMatrix[16];
+
+
 
 #ifndef M_PI
 #define M_PI 3.1415926535897932384626433832795
 #endif
 
 #define DRAW_FRAME
+
+bool Comp(const int &a,const int &b)
+{
+    return a>b;
+}
+
 
 class Vertex {
 public:
@@ -367,7 +382,43 @@ public:
 
 void Draw() {
     int face, vertex, i;
+    int hasDrawminFace=0; //0 means not, 1 means has
+    int size=minFaceNameAll.size();
+    int minFaceId=-1;
+    if(size>0){
+        minFaceId=minFaceNameAll[size-1];
+    }    
+
     for (face = 0; face < fIndex; face++) {
+        if(isPicking){
+            // cout<<"########## in method Draw  ##########"<<endl;
+            // cout<<"fIndex is  "<<fIndex<<endl;
+            // find the face in all the faces
+            
+            if(face==minFaceId){
+                // cout<<"the face id is "<<face<<endl;
+                cout<<"########## findminFace  ##########"<<endl;
+                // findMinFace=1;
+                float frontColor[] = {0.7f, 0.9f, 0.2f, 1.0f};
+                glMaterialfv(GL_FRONT, GL_AMBIENT, frontColor);
+                glMaterialfv(GL_FRONT, GL_DIFFUSE, frontColor);
+                glMaterialfv(GL_FRONT, GL_SPECULAR, frontColor);
+                glMaterialf(GL_FRONT, GL_SHININESS, 100);
+                // cout<<"in class draw finding the min face"<<endl;
+                // if(size)
+                if(size>0){
+                    size--;
+                    minFaceId=minFaceNameAll[size-1];
+                }
+            } 
+        }
+
+
+        // if use glselect, load this face and paint it
+        if(renderMode==GL_SELECT){
+            glLoadName(face);
+        }
+
         Face *currentFace = f[face];
         glBegin(mode);
         for (vertex = 0; vertex < currentFace->vIndex; vertex++) {
@@ -401,6 +452,15 @@ void Draw() {
             }
         }
         glEnd();
+        if(isPicking){
+            float frontColor[] = {0.2f, 0.7f, 0.7f, 1.0f};
+            glMaterialfv(GL_FRONT, GL_AMBIENT, frontColor);
+            glMaterialfv(GL_FRONT, GL_DIFFUSE, frontColor);
+            glMaterialfv(GL_FRONT, GL_SPECULAR, frontColor);
+            glMaterialf(GL_FRONT, GL_SHININESS, 100);
+
+        }
+
     }
 }
 private:
@@ -485,20 +545,47 @@ void DrawFrame()
 
 void Draw() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);		// Clear The Screen And The Depth Buffer
-    glLoadIdentity();
-    glTranslated(x_offset, y_offset, z_offset);                          // Viewing transformation
-    glRotated(xangle, 0.0, 1.0, 0.0);               
-    glRotated(yangle, 1.0, 0.0, 0.0);   //use yangle
-    if (data != NULL)
-        data->Draw();
-    else
-        glutSolidTeapot(1.0);	//draw a teapot when no argument is provided
+    if(isPicking){
+        glMatrixMode(GL_MODELVIEW);
+        
+        glGetFloatv(GL_MODELVIEW_MATRIX, operationMatrix);
 
-#ifdef DRAW_FRAME
-	DrawFrame();
-#endif
+        operationMatrix[12] = 0.0f;
+        operationMatrix[13] = 0.0f;
+        operationMatrix[14] = 0.0f;
+        glLoadIdentity();
+
+        glTranslated(x_offset, y_offset, z_offset);                          // Viewing transformation
+        cout<<"#####i am in Draw picking "<<endl;
+
+        glMultMatrixf(operationMatrix);
+        // cout<<"#####the operationMatrix is  "<<operationMatrix<<endl;
+
+    }
+    else{
+        glLoadIdentity();
+        glTranslated(x_offset, y_offset, z_offset);                          // Viewing transformation
+        glRotated(xangle, 0.0, 1.0, 0.0);               
+        glRotated(yangle, 1.0, 0.0, 0.0);   //use yangle
+    }
+
+    if (data != NULL){
+        data->Draw();
+        // cout<<"the picking value is "<<isPicking<<endl;
+        // cout<<"done  "<<endl;
+    }
+    else{
+        glutSolidTeapot(1.0);	//draw a teapot when no argument is provided
+    }
+
+
+    #ifdef DRAW_FRAME
+    	DrawFrame();
+    #endif
     glFlush();
     glutSwapBuffers();
+
+    // isPicking=0;
 
 
 }
@@ -555,6 +642,7 @@ void onKeyPress(unsigned char key, int x, int y) {
 #define BUFSIZE 512
 
 void processHits(GLint hits, GLuint buffer[]){
+    cout<<"########## in processHits  ##########"<<endl;
     unsigned int i, j;
     GLuint  names, *ptr,*ptrNames,minZ,numberOfNames;
 
@@ -576,9 +664,20 @@ void processHits(GLint hits, GLuint buffer[]){
     }
     cout<<"finding min dis  "<<endl;
     ptr=ptrNames;
-    for (j = 0; j < numberOfNames; j++,ptr++) {
-        cout<< *ptr ;
-    }
+    minFaceName=*ptrNames;
+
+    minFaceNameAll.push_back(minFaceName);
+    // minFaceNameAll.sort();
+    sort(minFaceNameAll.begin(),minFaceNameAll.end());
+
+    // if not in the range, the value will be quite great
+    cout<<numberOfNames<<endl;
+    cout<<"ptrNames are "<<*ptrNames<<endl;
+    cout<<"########## out processHits  ##########"<<endl;
+
+    // for (j = 0; j < numberOfNames; j++,ptr++) {
+    //     cout<< *ptr ;
+    // }
 
 }
 
@@ -589,57 +688,62 @@ void cbkMouse(int button, int state, int x, int y){
         oldy=y;
         // cout<<"the left mouse is clicking"<<endl;
     }
-    else if(button==GLUT_LEFT_BUTTON && state==GLUT_UP){
-        cout<<"the right mouse is clicking"<<endl;
-    }
+    // else if(button==GLUT_LEFT_BUTTON && state==GLUT_UP){
+    //     //
+    // }
     else if(button==GLUT_RIGHT_BUTTON && state==GLUT_DOWN){
+        cout<<"the right mouse is clicking"<<endl;
         // if click using right mouse
         // doing picking
         GLuint selectBuf[BUFSIZE];
         GLint hits;
         GLint viewport[4];  
+
         glGetIntegerv(GL_VIEWPORT, viewport); 
         glSelectBuffer( BUFSIZE, selectBuf );
         glRenderMode( GL_SELECT );
 
-        // glPushName(0);
+        glInitNames();        
+        glPushName(1000);
+
+        glGetFloatv(GL_MODELVIEW_MATRIX, operationMatrix);
         glMatrixMode(GL_PROJECTION);
         glPushMatrix();
+
         glLoadIdentity();
 
         gluPickMatrix( (GLdouble) x, (GLdouble) ( viewport[3] - y ) , 5.0, 5.0, viewport ); 
-        double aspect = (double)windy / windx;
-        glFrustum(-5, 5, -5 * aspect, 5 * aspect, 10, 74);          // Define perspective projection frustum
+
+        double aspect = (double)windy  / windx;
+        glFrustum(-5, 5, -5 * aspect, 5 * aspect, 10, 74);
         glMatrixMode(GL_MODELVIEW);
-        
+
+
+        cout<<"after  glFrustum"<<endl;
         // draw the object
         // makeCustomAnnot(GL_SELECT);
-        glInitNames();
-        glPushName(1000);
+
         glPushMatrix();
+
+        renderMode=GL_SELECT;
         data->Draw();
-
-        // glLoadIdentity();
-
-        // gluOrtho2D(0.0, 3.0, 0.0, 3.0 );
-        // drawSquares(GL_SELECT);
-
+        renderMode=GL_RENDER;
 
         glMatrixMode(GL_PROJECTION);
         glPopMatrix();
 
-        // glFlush(); 
+        glFlush(); 
+
         cout<<"i am here"<<endl;
         hits = glRenderMode(GL_RENDER);
         processHits(hits, selectBuf);  
+        isPicking=1;
 
-        glutPostRedisplay();
+        // glutPostRedisplay();
     }
-
 }
-void motion(int x, int y)  
-{  
-    cout<<"x is "<<x<<" y is  "<<y<<endl;
+void motion(int x, int y){  
+    // cout<<"x is "<<x<<" y is  "<<y<<endl;
     int deltax = oldx - x;  
     int deltay = oldy - y;  
     xangle -= 2*360*float(deltax) / windx;   //if up to down, xangle should be negative
