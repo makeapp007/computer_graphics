@@ -397,7 +397,7 @@ void Draw() {
             
             if(face==minFaceId){
                 // cout<<"the face id is "<<face<<endl;
-                cout<<"########## findminFace  ##########"<<endl;
+                // cout<<"########## findminFace  ##########"<<endl;
                 // findMinFace=1;
                 float frontColor[] = {0.7f, 0.9f, 0.2f, 1.0f};
                 glMaterialfv(GL_FRONT, GL_AMBIENT, frontColor);
@@ -556,7 +556,7 @@ void Draw() {
         glLoadIdentity();
 
         glTranslated(x_offset, y_offset, z_offset);                          // Viewing transformation
-        cout<<"#####i am in Draw picking "<<endl;
+        // cout<<"#####i am in Draw picking "<<endl;
 
         glMultMatrixf(operationMatrix);
         // cout<<"#####the operationMatrix is  "<<operationMatrix<<endl;
@@ -668,11 +668,12 @@ void processHits(GLint hits, GLuint buffer[]){
 
     minFaceNameAll.push_back(minFaceName);
     // minFaceNameAll.sort();
-    sort(minFaceNameAll.begin(),minFaceNameAll.end());
+    sort(minFaceNameAll.begin(),minFaceNameAll.end(),Comp);
 
     // if not in the range, the value will be quite great
-    cout<<numberOfNames<<endl;
+    cout<<"numberOfNames is "<<numberOfNames<<endl;
     cout<<"ptrNames are "<<*ptrNames<<endl;
+    cout<<"all size is "<<minFaceNameAll.size()<<endl;
     cout<<"########## out processHits  ##########"<<endl;
 
     // for (j = 0; j < numberOfNames; j++,ptr++) {
