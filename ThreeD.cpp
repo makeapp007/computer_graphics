@@ -390,7 +390,7 @@ void Draw() {
     }    
 
     for (face = 0; face < fIndex; face++) {
-        if(isPicking){
+
             // cout<<"########## in method Draw  ##########"<<endl;
             // cout<<"fIndex is  "<<fIndex<<endl;
             // find the face in all the faces
@@ -411,7 +411,6 @@ void Draw() {
                     minFaceId=minFaceNameAll[size-1];
                 }
             } 
-        }
 
 
         // if use glselect, load this face and paint it
@@ -452,14 +451,14 @@ void Draw() {
             }
         }
         glEnd();
-        if(isPicking){
+        // if(isPicking){
             float frontColor[] = {0.2f, 0.7f, 0.7f, 1.0f};
             glMaterialfv(GL_FRONT, GL_AMBIENT, frontColor);
             glMaterialfv(GL_FRONT, GL_DIFFUSE, frontColor);
             glMaterialfv(GL_FRONT, GL_SPECULAR, frontColor);
             glMaterialf(GL_FRONT, GL_SHININESS, 100);
-
-        }
+            isPicking=0;
+        // }
 
     }
 }
@@ -662,20 +661,42 @@ void processHits(GLint hits, GLuint buffer[]){
         }
         ptr+=names+2;
     }
-    cout<<"finding min dis  "<<endl;
-    ptr=ptrNames;
-    minFaceName=*ptrNames;
+    if(hits>0){
+        cout<<"finding min dis  "<<endl;
+        cout<<"number of hits are "<<hits<<endl;
+        ptr=ptrNames;
+        minFaceName=*ptrNames;
 
-    minFaceNameAll.push_back(minFaceName);
-    // minFaceNameAll.sort();
-    sort(minFaceNameAll.begin(),minFaceNameAll.end(),Comp);
+        cout<<"ptrNames are "<<*ptrNames<<endl;
 
-    // if not in the range, the value will be quite great
-    cout<<"numberOfNames is "<<numberOfNames<<endl;
-    cout<<"ptrNames are "<<*ptrNames<<endl;
-    cout<<"all size is "<<minFaceNameAll.size()<<endl;
-    cout<<"########## out processHits  ##########"<<endl;
+        // if not exist, then add
+        int i=0;
+        int flag=0;
+        for(i=0;i<minFaceNameAll.size();i++){
+            if(minFaceName==minFaceNameAll[i]){
+                flag=1;
+                break;
+            }
+        }
 
+        if(flag==0){
+            minFaceNameAll.push_back(minFaceName);
+        }
+
+        // minFaceNameAll.sort();
+        sort(minFaceNameAll.begin(),minFaceNameAll.end(),Comp);
+
+        
+        for(i=0;i<minFaceNameAll.size();i++){
+            cout<<minFaceNameAll[i]<<"  ";
+        }
+        cout<<endl;
+
+        // if not in the range, the value will be quite great
+        cout<<"numberOfNames is "<<numberOfNames<<endl;
+        cout<<"all size is "<<minFaceNameAll.size()<<endl;
+        cout<<"########## out processHits  ##########"<<endl;
+    }    
     // for (j = 0; j < numberOfNames; j++,ptr++) {
     //     cout<< *ptr ;
     // }
@@ -687,7 +708,7 @@ void cbkMouse(int button, int state, int x, int y){
     if(button==GLUT_LEFT_BUTTON && state==GLUT_DOWN){
         oldx=x;
         oldy=y;
-        // cout<<"the left mouse is clicking"<<endl;
+        cout<<"the left mouse is clicking"<<endl;
     }
     // else if(button==GLUT_LEFT_BUTTON && state==GLUT_UP){
     //     //
@@ -705,7 +726,8 @@ void cbkMouse(int button, int state, int x, int y){
         glRenderMode( GL_SELECT );
 
         glInitNames();        
-        glPushName(1000);
+        // so that wont meet this number
+        glPushName(100000);
 
         glGetFloatv(GL_MODELVIEW_MATRIX, operationMatrix);
         glMatrixMode(GL_PROJECTION);
@@ -713,7 +735,7 @@ void cbkMouse(int button, int state, int x, int y){
 
         glLoadIdentity();
 
-        gluPickMatrix( (GLdouble) x, (GLdouble) ( viewport[3] - y ) , 5.0, 5.0, viewport ); 
+        gluPickMatrix( (GLdouble) x, (GLdouble) ( viewport[3] - y ) , 2.0, 2.0, viewport ); 
 
         double aspect = (double)windy  / windx;
         glFrustum(-5, 5, -5 * aspect, 5 * aspect, 10, 74);
@@ -737,6 +759,7 @@ void cbkMouse(int button, int state, int x, int y){
 
         cout<<"i am here"<<endl;
         hits = glRenderMode(GL_RENDER);
+
         processHits(hits, selectBuf);  
         isPicking=1;
 
@@ -751,6 +774,7 @@ void motion(int x, int y){
     yangle -= 2*360*float(deltay) / windy;  //if up to down, yangle should be negative
     oldx = x;
     oldy = y;
+    cout<<isPicking<<endl;
     glutPostRedisplay();  
 }
 
