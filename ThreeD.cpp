@@ -552,15 +552,88 @@ void onKeyPress(unsigned char key, int x, int y) {
     glutPostRedisplay();
 }
 
+#define BUFSIZE 512
+
+void processHits(GLint hits, GLuint buffer[]){
+    unsigned int i, j;
+    GLuint  names, *ptr,*ptrNames,minZ,numberOfNames;
+
+    ptr = ( GLuint * )buffer; 
+    minZ=0xffffffff;  
+
+    cout<<"i am in processHits"<<endl;
+    for( i=0; i<hits; i++ ){ 
+        names = *ptr;    
+        ptr ++;        
+        if(*ptr<minZ){
+            // change minz
+            numberOfNames=names;
+            minZ=*ptr;
+            ptrNames=ptr+2;
+
+        }
+        ptr+=names+2;
+    }
+    cout<<"finding min dis  "<<endl;
+    ptr=ptrNames;
+    for (j = 0; j < numberOfNames; j++,ptr++) {
+        cout<< *ptr ;
+    }
+
+}
+
 void cbkMouse(int button, int state, int x, int y){
 	printf("(%d, %d)\n", x, y);
     if(button==GLUT_LEFT_BUTTON && state==GLUT_DOWN){
         oldx=x;
         oldy=y;
-        cout<<"the left mouse is clicking"<<endl;
+        // cout<<"the left mouse is clicking"<<endl;
     }
     else if(button==GLUT_LEFT_BUTTON && state==GLUT_UP){
         cout<<"the right mouse is clicking"<<endl;
+    }
+    else if(button==GLUT_RIGHT_BUTTON && state==GLUT_DOWN){
+        // if click using right mouse
+        // doing picking
+        GLuint selectBuf[BUFSIZE];
+        GLint hits;
+        GLint viewport[4];  
+        glGetIntegerv(GL_VIEWPORT, viewport); 
+        glSelectBuffer( BUFSIZE, selectBuf );
+        glRenderMode( GL_SELECT );
+
+        // glPushName(0);
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
+
+        gluPickMatrix( (GLdouble) x, (GLdouble) ( viewport[3] - y ) , 5.0, 5.0, viewport ); 
+        double aspect = (double)windy / windx;
+        glFrustum(-5, 5, -5 * aspect, 5 * aspect, 10, 74);          // Define perspective projection frustum
+        glMatrixMode(GL_MODELVIEW);
+        
+        // draw the object
+        // makeCustomAnnot(GL_SELECT);
+        glInitNames();
+        glPushName(1000);
+        glPushMatrix();
+        data->Draw();
+
+        // glLoadIdentity();
+
+        // gluOrtho2D(0.0, 3.0, 0.0, 3.0 );
+        // drawSquares(GL_SELECT);
+
+
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
+
+        // glFlush(); 
+        cout<<"i am here"<<endl;
+        hits = glRenderMode(GL_RENDER);
+        processHits(hits, selectBuf);  
+
+        glutPostRedisplay();
     }
 
 }
